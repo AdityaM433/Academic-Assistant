@@ -498,35 +498,50 @@
 
     const btn = document.getElementById('processBtn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Processing…';
+    btn.innerHTML = '<span class="spinner"></span> Processing… (may take 30–60s)';
 
     const formData = new FormData();
     formData.append('api_key', key);
     formData.append('pdf', file);
 
     try {
-      const res  = await fetch('/upload', { method: 'POST', body: formData });
-      const data = await res.json();
+        const res = await fetch('/upload', { method: 'POST', body: formData });
+        
+        // Check if response is ok before parsing JSON
+        if (!res.ok) {
+            const text = await res.text();
+            let msg = 'Server error. Please try again.';
+            try { msg = JSON.parse(text).error; } catch {}
+            showStatus('error', '❌ ' + msg);
+            showToast(msg, 'error');
+            btn.disabled = false;
+            btn.innerHTML = '⚡ Process Document';
+            updateProcessBtn();
+            return;
+        }
 
-      if (data.success) {
-        docLoaded = true;
-        showStatus('ready', '✅ ' + data.filename + ' ready!');
-        document.getElementById('topbarBadge').textContent = '📄 ' + data.filename;
-        document.getElementById('sendBtn').disabled = false;
-        document.getElementById('summarizeBtn').disabled = false;
-        document.getElementById('quizBtn').disabled = false;
-        showToast('Document indexed successfully!', 'success');
-      } else {
-        showStatus('error', '❌ ' + data.error);
-        showToast(data.error, 'error');
-      }
+        const data = await res.json();
+        if (data.success) {
+            docLoaded = true;
+            showStatus('ready', '✅ ' + data.filename + ' ready!');
+            document.getElementById('topbarBadge').textContent = '📄 ' + data.filename;
+            document.getElementById('sendBtn').disabled = false;
+            document.getElementById('summarizeBtn').disabled = false;
+            document.getElementById('quizBtn').disabled = false;
+            showToast('Document indexed successfully!', 'success');
+        } else {
+            showStatus('error', '❌ ' + data.error);
+            showToast(data.error, 'error');
+        }
     } catch (err) {
-      showStatus('error', '❌ Connection error. Is Flask running?');
+        showStatus('error', '❌ ' + err.message);
+        showToast('Error: ' + err.message, 'error');
     }
+
     btn.disabled = false;
     btn.innerHTML = '⚡ Process Document';
     updateProcessBtn();
-  }
+}
 
   function showStatus(type, msg) {
     const el = document.getElementById('docStatus');
