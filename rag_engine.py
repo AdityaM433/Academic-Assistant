@@ -1,4 +1,10 @@
-from langchain_community.document_loaders import PyPDFLoader
+import os
+from langchain_community.document_loaders import (
+    PyPDFLoader,
+    Docx2txtLoader,
+    UnstructuredPowerPointLoader,
+    UnstructuredExcelLoader,
+)
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings, ChatOpenAI
 from langchain_community.vectorstores import FAISS
@@ -16,12 +22,24 @@ class RAGEngine:
         self.embeddings = OpenAIEmbeddings(openai_api_key=api_key)
 
     def load_document(self, file_path: str):
-        loader = PyPDFLoader(file_path)
+        ext = os.path.splitext(file_path)[1].lower()
+
+        if ext == ".pdf":
+            loader = PyPDFLoader(file_path)
+        elif ext in [".docx", ".doc"]:
+            loader = Docx2txtLoader(file_path)
+        elif ext in [".pptx", ".ppt"]:
+            loader = UnstructuredPowerPointLoader(file_path)
+        elif ext in [".xlsx", ".xls"]:
+            loader = UnstructuredExcelLoader(file_path)
+        else:
+            raise ValueError(f"Unsupported file type: {ext}. Please upload PDF, Word, PowerPoint, or Excel.")
+
         pages = loader.load()
         splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=100)
         chunks = splitter.split_documents(pages)
         if not chunks:
-            raise ValueError("No text could be extracted from the PDF.")
+            raise ValueError("No text could be extracted from this file.")
         self.vectorstore = FAISS.from_documents(chunks, self.embeddings)
         self.retriever = self.vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 4})
 
@@ -50,18 +68,18 @@ Answer:""")
         )
         return chain.invoke(question)
 
-    def summarize(self, detail_level: str = "Medium (1–2 paragraphs)") -> str:
+    def summarize(self, detail_level: str = "Medium (1-2 paragraphs)") -> str:
         if not self.vectorstore:
             return "No document loaded."
         level_map = {
-            "Short (3–4 sentences)": "in 3-4 sentences",
-            "Medium (1–2 paragraphs)": "in 1-2 paragraphs",
+            "Short (3-4 sentences)": "in 3-4 sentences",
+            "Medium (1-2 paragraphs)": "in 1-2 paragraphs",
             "Detailed (full breakdown)": "in detail with clear sections and bullet points",
         }
         instruction = level_map.get(detail_level, "in 1-2 paragraphs")
         docs = self.vectorstore.similarity_search("main topics key ideas summary overview", k=8)
         context = "\n\n".join(d.page_content for d in docs)
-        prompt = f"Summarize the following academic document {instruction}.\n\nContent:\n{context}\n\nSummary:"
+        prompt = f"Summarize the following document {instruction}.\n\nContent:\n{context}\n\nSummary:"
         return self.llm.invoke(prompt).content
 
     def generate_quiz(self, quiz_type: str = "Multiple Choice (MCQ)", num_questions: int = 5) -> str:

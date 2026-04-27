@@ -24,7 +24,7 @@ def upload():
 
     if not api_key:
         return jsonify({"error": "Please provide your OpenAI API key."}), 400
-    if not file or not file.filename.endswith(".pdf"):
+    if not file or not any(file.filename.endswith(ext) for ext in [".pdf", ".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xls"]):
         return jsonify({"error": "Please upload a valid PDF file."}), 400
 
     try:
