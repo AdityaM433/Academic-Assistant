@@ -5,7 +5,6 @@ from rag_engine import RAGEngine
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "academic-assistant-secret-2024")
 
-# In-memory store: session_id -> RAGEngine instance
 engines = {}
 
 @app.route("/")
@@ -18,25 +17,22 @@ def index():
 def upload():
     sid = session.get("sid", str(uuid.uuid4()))
     session["sid"] = sid
-
     api_key = request.form.get("api_key", "").strip()
     file = request.files.get("pdf")
-
     if not api_key:
         return jsonify({"error": "Please provide your OpenAI API key."}), 400
-    if not file or not any(file.filename.endswith(ext) for ext in [".pdf", ".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xls"]):
-        return jsonify({"error": "Please upload a valid PDF file."}), 400
-
+    allowed = [".pdf", ".docx", ".doc", ".pptx", ".ppt", ".xlsx", ".xls"]
+    ext = os.path.splitext(file.filename)[1].lower() if file else ""
+    if not file or ext not in allowed:
+        return jsonify({"error": "Please upload a PDF, Word, PowerPoint, or Excel file."}), 400
     try:
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
         file.save(tmp.name)
         tmp.close()
-
         engine = RAGEngine(api_key=api_key)
         engine.load_document(tmp.name)
         engines[sid] = engine
         os.unlink(tmp.name)
-
         return jsonify({"success": True, "filename": file.filename})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -46,17 +42,26 @@ def ask():
     sid = session.get("sid")
     engine = engines.get(sid)
     if not engine:
-        return jsonify({"error": "No document loaded. Please upload a PDF first."}), 400
-
+        return jsonify({"error": "No document loaded. Please upload a file first."}), 400
     question = request.json.get("question", "").strip()
     if not question:
         return jsonify({"error": "Question cannot be empty."}), 400
-
     try:
-        answer = engine.ask(question)
-        return jsonify({"answer": answer})
+        result = engine.ask(question)
+        return jsonify({
+            "answer": result["answer"],
+            "sources": result["sources"]
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/clear_history", methods=["POST"])
+def clear_history():
+    sid = session.get("sid")
+    engine = engines.get(sid)
+    if engine:
+        engine.clear_history()
+    return jsonify({"success": True})
 
 @app.route("/summarize", methods=["POST"])
 def summarize():
@@ -64,8 +69,7 @@ def summarize():
     engine = engines.get(sid)
     if not engine:
         return jsonify({"error": "No document loaded."}), 400
-
-    detail = request.json.get("detail", "Medium (1–2 paragraphs)")
+    detail = request.json.get("detail", "Medium (1-2 paragraphs)")
     try:
         summary = engine.summarize(detail)
         return jsonify({"summary": summary})
@@ -78,7 +82,6 @@ def quiz():
     engine = engines.get(sid)
     if not engine:
         return jsonify({"error": "No document loaded."}), 400
-
     data = request.json
     quiz_type = data.get("quiz_type", "Multiple Choice (MCQ)")
     num_q = int(data.get("num_questions", 5))

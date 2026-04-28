@@ -1,709 +1,569 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AcademiQ — AI Academic Assistant</title>
+<title>AcademiQ &mdash; AI Academic Assistant</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  /* ── Reset & Variables ─────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg:        #0d0f14;
-    --surface:   #13161e;
-    --surface2:  #1a1e2a;
-    --border:    #252a38;
-    --accent:    #6c8ef7;
-    --accent2:   #a78bfa;
-    --green:     #34d399;
-    --red:       #f87171;
-    --yellow:    #fbbf24;
-    --text:      #e8eaf2;
-    --muted:     #6b7280;
-    --radius:    14px;
-    --font:      'Sora', sans-serif;
-    --mono:      'JetBrains Mono', monospace;
+    --bg: #0d0f14; --surface: #13161e; --surface2: #1a1e2a; --surface3: #1f2535;
+    --border: #252a38; --accent: #6c8ef7; --accent2: #a78bfa;
+    --green: #34d399; --red: #f87171; --yellow: #fbbf24; --orange: #fb923c;
+    --text: #e8eaf2; --muted: #6b7280; --muted2: #4b5563;
+    --radius: 14px; --font: 'Sora', sans-serif; --mono: 'JetBrains Mono', monospace;
   }
-
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.6; overflow: hidden; }
-
-  /* ── Layout ────────────────────────────────────────────────── */
   .shell { display: flex; height: 100vh; width: 100vw; }
 
-  /* ── Sidebar ────────────────────────────────────────────────── */
-  .sidebar {
-    width: 280px; min-width: 280px;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex; flex-direction: column;
-    padding: 0;
-    position: relative;
-    z-index: 10;
-  }
+  /* ── Sidebar ── */
+  .sidebar { width: 290px; min-width: 290px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 10; overflow: hidden; }
+  .sidebar-logo { padding: 20px 18px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .logo-mark { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; font-weight: 700; }
+  .logo-icon { width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+  .logo-sub { font-size: 0.65rem; color: var(--muted); margin-top: 1px; font-weight: 400; }
+  .sidebar-body { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 5px; }
+  .sidebar-body::-webkit-scrollbar { width: 3px; }
+  .sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .sidebar-logo {
-    padding: 24px 20px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  .logo-mark {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 1.25rem; font-weight: 700; letter-spacing: -0.5px;
-  }
-  .logo-icon {
-    width: 34px; height: 34px; border-radius: 10px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1rem; flex-shrink: 0;
-  }
-  .logo-sub { font-size: 0.7rem; color: var(--muted); margin-top: 2px; font-weight: 400; }
-
-  .sidebar-section { padding: 16px 14px 8px; flex: 1; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
-
-  .setup-card {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 14px;
-    display: flex; flex-direction: column; gap: 10px;
-  }
-  .setup-label { font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-
+  .setup-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px; display: flex; flex-direction: column; gap: 9px; }
+  .setup-label { font-size: 0.65rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
   .input-wrap { position: relative; }
-  .input-wrap input, .input-wrap select {
-    width: 100%; padding: 9px 12px;
-    background: var(--bg); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 0.82rem;
-    outline: none; transition: border-color 0.2s;
-  }
-  .input-wrap input:focus, .input-wrap select:focus { border-color: var(--accent); }
-  .input-wrap input::placeholder { color: var(--muted); }
-  .input-wrap select option { background: var(--surface2); }
+  .input-wrap input { width: 100%; padding: 8px 34px 8px 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 0.8rem; outline: none; transition: border-color 0.2s; }
+  .input-wrap input:focus { border-color: var(--accent); }
+  .input-wrap input::placeholder { color: var(--muted2); }
+  .eye-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.8rem; padding: 2px; }
 
-  .eye-btn {
-    position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.85rem; padding: 2px;
-  }
-
-  .upload-zone {
-    border: 1.5px dashed var(--border); border-radius: 10px;
-    padding: 14px 10px; text-align: center; cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-    position: relative;
-  }
+  .upload-zone { border: 1.5px dashed var(--border); border-radius: 10px; padding: 12px 8px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
   .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(108,142,247,0.05); }
   .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-  .upload-icon { font-size: 1.4rem; margin-bottom: 4px; }
-  .upload-text { font-size: 0.78rem; color: var(--muted); }
+  .upload-icon { font-size: 1.3rem; margin-bottom: 3px; }
+  .upload-text { font-size: 0.74rem; color: var(--muted); }
   .upload-text strong { color: var(--accent); }
-  .file-chosen { font-size: 0.78rem; color: var(--green); margin-top: 4px; font-family: var(--mono); word-break: break-all; }
+  .upload-formats { font-size: 0.65rem; color: var(--muted2); margin-top: 2px; }
+  .file-chosen { font-size: 0.72rem; color: var(--green); margin-top: 4px; font-family: var(--mono); word-break: break-all; }
 
-  .btn {
-    display: flex; align-items: center; justify-content: center; gap: 7px;
-    padding: 10px 16px; border-radius: 9px; font-family: var(--font);
-    font-size: 0.85rem; font-weight: 600; cursor: pointer; border: none;
-    transition: opacity 0.2s, transform 0.1s;
-  }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 14px; border-radius: 9px; font-family: var(--font); font-size: 0.82rem; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.2s, transform 0.1s; width: 100%; }
   .btn:active { transform: scale(0.97); }
   .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
-  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:hover { opacity: 0.88; }
   .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
   .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
-  .btn:disabled { opacity: 0.45; pointer-events: none; }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+  .btn-danger:hover { background: rgba(248,113,113,0.08); }
+  .btn:disabled { opacity: 0.4; pointer-events: none; }
 
-  .doc-status {
-    padding: 10px 12px; border-radius: 9px;
-    font-size: 0.78rem; display: flex; align-items: center; gap: 8px;
-    animation: fadeIn 0.3s ease;
-  }
+  .doc-status { padding: 8px 11px; border-radius: 9px; font-size: 0.74rem; display: flex; align-items: flex-start; gap: 6px; animation: fadeIn 0.3s ease; word-break: break-word; }
   .doc-status.ready { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.25); color: var(--green); }
   .doc-status.error  { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.25); color: var(--red); }
 
-  .nav-section { padding: 8px 14px 14px; display: flex; flex-direction: column; gap: 3px; }
-  .nav-label { font-size: 0.68rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 6px 6px; }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 12px; border-radius: 9px; cursor: pointer;
-    font-size: 0.85rem; color: var(--muted); transition: all 0.15s;
-    border: 1px solid transparent;
-  }
+  .nav-label { font-size: 0.64rem; font-weight: 600; color: var(--muted2); text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 6px 3px; }
+  .nav-item { display: flex; align-items: center; gap: 9px; padding: 8px 11px; border-radius: 9px; cursor: pointer; font-size: 0.82rem; color: var(--muted); transition: all 0.15s; border: 1px solid transparent; }
   .nav-item:hover { background: var(--surface2); color: var(--text); }
   .nav-item.active { background: var(--surface2); color: var(--text); border-color: var(--border); }
-  .nav-item .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+  .nav-icon { font-size: 0.95rem; width: 18px; text-align: center; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 3px 0; }
 
-  /* ── Main ───────────────────────────────────────────────────── */
-  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  /* Memory badge */
+  .memory-badge { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; background: rgba(108,142,247,0.08); border: 1px solid rgba(108,142,247,0.2); font-size: 0.72rem; color: var(--accent); }
+  .memory-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: blink 2s infinite; }
+  .memory-dot.off { background: var(--muted2); animation: none; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  /* Top bar */
-  .topbar {
-    padding: 16px 28px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--surface); flex-shrink: 0;
-  }
-  .topbar-title { font-size: 1rem; font-weight: 600; }
-  .topbar-badge {
-    font-size: 0.72rem; font-weight: 500; padding: 4px 10px; border-radius: 20px;
-    background: rgba(108,142,247,0.12); color: var(--accent); border: 1px solid rgba(108,142,247,0.25);
-  }
+  /* ── Main ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+  .topbar { padding: 13px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface); flex-shrink: 0; gap: 12px; }
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  .topbar-title { font-size: 0.92rem; font-weight: 600; }
+  .topbar-badge { font-size: 0.68rem; font-weight: 500; padding: 3px 9px; border-radius: 20px; background: rgba(108,142,247,0.12); color: var(--accent); border: 1px solid rgba(108,142,247,0.25); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .topbar-actions { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+  .icon-btn { padding: 5px 10px; border-radius: 7px; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-size: 0.75rem; cursor: pointer; transition: all 0.15s; font-family: var(--font); display: flex; align-items: center; gap: 5px; }
+  .icon-btn:hover { color: var(--text); border-color: var(--muted); }
+  .icon-btn.danger:hover { color: var(--red); border-color: rgba(248,113,113,0.4); }
 
-  /* Panels */
   .panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
   .panel.active { display: flex; }
 
-  /* ── Chat Panel ─────────────────────────────────────────────── */
-  .chat-messages {
-    flex: 1; overflow-y: auto; padding: 28px;
-    display: flex; flex-direction: column; gap: 20px;
-    scroll-behavior: smooth;
-  }
+  /* ── Chat ── */
+  .chat-messages { flex: 1; overflow-y: auto; padding: 22px 26px; display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth; }
   .chat-messages::-webkit-scrollbar { width: 4px; }
-  .chat-messages::-webkit-scrollbar-track { background: transparent; }
   .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .msg { display: flex; gap: 12px; animation: slideUp 0.25s ease; max-width: 820px; }
+  .msg { display: flex; gap: 10px; animation: slideUp 0.22s ease; max-width: 860px; }
   .msg.user { flex-direction: row-reverse; align-self: flex-end; }
-  .msg.user .bubble { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-radius: 18px 18px 4px 18px; }
-  .msg.bot .bubble { background: var(--surface2); border: 1px solid var(--border); border-radius: 18px 18px 18px 4px; }
-
-  .msg-avatar {
-    width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
-  }
+  .msg.user .bubble { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-radius: 16px 16px 4px 16px; }
+  .msg.bot .bubble-wrap { display: flex; flex-direction: column; gap: 6px; max-width: 700px; }
+  .msg.bot .bubble { background: var(--surface2); border: 1px solid var(--border); border-radius: 16px 16px 16px 4px; }
+  .msg-avatar { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 0.82rem; }
   .msg.bot .msg-avatar { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
   .msg.user .msg-avatar { background: var(--surface2); border: 1px solid var(--border); }
+  .bubble { padding: 10px 14px; font-size: 0.87rem; line-height: 1.7; }
+  .msg.user .bubble { max-width: 600px; }
 
-  .bubble { padding: 12px 16px; font-size: 0.9rem; line-height: 1.65; max-width: 680px; }
-  .bubble p { margin-bottom: 8px; }
-  .bubble p:last-child { margin-bottom: 0; }
+  /* Citations */
+  .citations { display: flex; flex-wrap: wrap; gap: 5px; }
+  .citation-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 20px; font-size: 0.7rem;
+    background: rgba(108,142,247,0.1); border: 1px solid rgba(108,142,247,0.25);
+    color: var(--accent); cursor: pointer; transition: all 0.15s; font-family: var(--mono);
+    position: relative;
+  }
+  .citation-chip:hover { background: rgba(108,142,247,0.2); }
+  .citation-chip .page-icon { font-size: 0.65rem; }
 
-  .typing-indicator { display: flex; gap: 5px; padding: 14px 16px; align-items: center; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: pulse 1.2s infinite; }
+  /* Tooltip for snippet */
+  .citation-chip .tooltip {
+    display: none; position: absolute; bottom: calc(100% + 6px); left: 0;
+    background: var(--surface3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 10px; font-size: 0.72rem; color: var(--muted);
+    width: 240px; z-index: 100; font-family: var(--font); line-height: 1.4;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4); pointer-events: none;
+  }
+  .citation-chip:hover .tooltip { display: block; }
+
+  /* Typing */
+  .typing-indicator { display: flex; gap: 4px; padding: 11px 14px; align-items: center; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: pulse 1.2s infinite; }
   .dot:nth-child(2) { animation-delay: 0.2s; }
   .dot:nth-child(3) { animation-delay: 0.4s; }
 
-  .chat-input-area {
-    padding: 16px 28px 20px; border-top: 1px solid var(--border); flex-shrink: 0;
-  }
-  .chat-form { display: flex; gap: 10px; align-items: flex-end; }
-  .chat-textarea {
-    flex: 1; resize: none; padding: 12px 16px; max-height: 140px; min-height: 48px;
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
-    color: var(--text); font-family: var(--font); font-size: 0.9rem; outline: none;
-    transition: border-color 0.2s; line-height: 1.5;
-  }
+  /* Chat input */
+  .chat-input-area { padding: 12px 24px 16px; border-top: 1px solid var(--border); flex-shrink: 0; }
+  .chat-form { display: flex; gap: 8px; align-items: flex-end; }
+  .chat-textarea { flex: 1; resize: none; padding: 10px 14px; max-height: 120px; min-height: 44px; background: var(--surface2); border: 1px solid var(--border); border-radius: 11px; color: var(--text); font-family: var(--font); font-size: 0.87rem; outline: none; transition: border-color 0.2s; line-height: 1.5; }
   .chat-textarea:focus { border-color: var(--accent); }
-  .chat-textarea::placeholder { color: var(--muted); }
-  .send-btn {
-    width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none; color: #fff; font-size: 1.1rem; cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s; display: flex; align-items: center; justify-content: center;
-  }
+  .chat-textarea::placeholder { color: var(--muted2); }
+  .send-btn { width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); border: none; color: #fff; font-size: 0.95rem; cursor: pointer; transition: opacity 0.2s, transform 0.1s; display: flex; align-items: center; justify-content: center; }
   .send-btn:hover { opacity: 0.85; }
-  .send-btn:active { transform: scale(0.94); }
+  .send-btn:active { transform: scale(0.93); }
   .send-btn:disabled { opacity: 0.35; pointer-events: none; }
-  .chat-hint { font-size: 0.72rem; color: var(--muted); text-align: center; margin-top: 8px; }
+  .chat-hint { font-size: 0.68rem; color: var(--muted2); text-align: center; margin-top: 6px; }
 
-  /* Welcome screen */
-  .welcome {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    flex: 1; gap: 14px; padding: 40px; text-align: center; animation: fadeIn 0.5s ease;
-  }
-  .welcome-icon { font-size: 3rem; margin-bottom: 6px; }
-  .welcome h2 { font-size: 1.5rem; font-weight: 700; }
-  .welcome p { color: var(--muted); max-width: 400px; font-size: 0.9rem; }
-  .welcome-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 8px; }
-  .chip {
-    padding: 8px 14px; border-radius: 20px; font-size: 0.8rem; cursor: pointer;
-    background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
-    transition: all 0.15s;
-  }
+  /* Welcome */
+  .welcome { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 10px; padding: 40px; text-align: center; animation: fadeIn 0.4s ease; }
+  .welcome-icon { font-size: 2.6rem; margin-bottom: 2px; }
+  .welcome h2 { font-size: 1.35rem; font-weight: 700; }
+  .welcome p { color: var(--muted); max-width: 380px; font-size: 0.86rem; }
+  .welcome-features { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; justify-content: center; }
+  .feature-pill { padding: 5px 12px; border-radius: 20px; font-size: 0.74rem; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); display: flex; align-items: center; gap: 5px; }
+  .welcome-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
+  .chip { padding: 6px 12px; border-radius: 20px; font-size: 0.76rem; cursor: pointer; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); transition: all 0.15s; }
   .chip:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* ── Summary & Quiz Panels ──────────────────────────────────── */
-  .tool-panel { flex: 1; overflow-y: auto; padding: 32px; display: flex; flex-direction: column; gap: 20px; max-width: 860px; width: 100%; margin: 0 auto; }
+  /* Tool panels */
+  .tool-panel { flex: 1; overflow-y: auto; padding: 26px; display: flex; flex-direction: column; gap: 16px; max-width: 820px; width: 100%; margin: 0 auto; }
   .tool-panel::-webkit-scrollbar { width: 4px; }
   .tool-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  .tool-header h2 { font-size: 1.3rem; font-weight: 700; }
-  .tool-header p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
-
-  .option-row { display: flex; flex-wrap: wrap; gap: 8px; }
-  .option-btn {
-    padding: 8px 16px; border-radius: 20px; font-size: 0.82rem; font-weight: 500;
-    background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
-    cursor: pointer; transition: all 0.15s;
-  }
+  .tool-header h2 { font-size: 1.15rem; font-weight: 700; }
+  .tool-header p { color: var(--muted); font-size: 0.81rem; margin-top: 3px; }
+  .option-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .option-btn { padding: 6px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 500; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); cursor: pointer; transition: all 0.15s; font-family: var(--font); }
   .option-btn:hover { border-color: var(--accent); color: var(--accent); }
   .option-btn.selected { background: rgba(108,142,247,0.12); border-color: var(--accent); color: var(--accent); }
-
-  .result-box {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 22px; font-size: 0.88rem; line-height: 1.8; white-space: pre-wrap;
-    animation: fadeIn 0.35s ease;
-  }
-
-  .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .download-btn {
-    display: flex; align-items: center; gap: 6px; padding: 8px 16px;
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-    color: var(--muted); font-size: 0.82rem; cursor: pointer; transition: all 0.15s;
-    font-family: var(--font);
-  }
+  .result-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; font-size: 0.86rem; line-height: 1.8; white-space: pre-wrap; animation: fadeIn 0.3s ease; word-break: break-word; }
+  .action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .download-btn { display: flex; align-items: center; gap: 5px; padding: 6px 13px; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; color: var(--muted); font-size: 0.78rem; cursor: pointer; transition: all 0.15s; font-family: var(--font); }
   .download-btn:hover { border-color: var(--green); color: var(--green); }
-
-  /* Number slider */
-  .slider-wrap { display: flex; align-items: center; gap: 12px; }
+  .slider-wrap { display: flex; align-items: center; gap: 11px; }
   .slider-wrap input[type=range] { flex: 1; accent-color: var(--accent); }
-  .slider-val { font-family: var(--mono); font-size: 0.88rem; color: var(--accent); font-weight: 600; min-width: 20px; }
+  .slider-val { font-family: var(--mono); font-size: 0.86rem; color: var(--accent); font-weight: 600; min-width: 18px; }
+  .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 18px; border-radius: 9px; font-family: var(--font); font-size: 0.82rem; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.2s, transform 0.1s; background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+  .action-btn:hover { opacity: 0.88; }
+  .action-btn:active { transform: scale(0.97); }
+  .action-btn:disabled { opacity: 0.4; pointer-events: none; }
 
-  /* Spinner */
-  .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
-
-  /* Toast */
-  .toast {
-    position: fixed; bottom: 24px; right: 24px; z-index: 9999;
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
-    padding: 12px 18px; font-size: 0.83rem; display: flex; align-items: center; gap: 8px;
-    animation: slideUp 0.3s ease; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  }
+  .spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; flex-shrink: 0; }
+  .toast { position: fixed; bottom: 20px; right: 20px; z-index: 9999; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 15px; font-size: 0.79rem; display: flex; align-items: center; gap: 6px; animation: slideUp 0.3s ease; box-shadow: 0 8px 30px rgba(0,0,0,0.4); max-width: 300px; }
   .toast.success { border-color: rgba(52,211,153,0.4); color: var(--green); }
   .toast.error   { border-color: rgba(248,113,113,0.4); color: var(--red); }
 
-  /* Animations */
-  @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes pulse   { 0%,80%,100% { transform: scale(0.7); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
-  @keyframes spin    { to { transform: rotate(360deg); } }
-
-  /* Divider */
-  .divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
-
-  /* Responsive */
-  @media (max-width: 700px) {
-    .sidebar { width: 100%; min-width: unset; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-    .shell { flex-direction: column; }
-  }
+  @keyframes fadeIn  { from { opacity:0 } to { opacity:1 } }
+  @keyframes slideUp { from { opacity:0; transform:translateY(10px) } to { opacity:1; transform:translateY(0) } }
+  @keyframes pulse   { 0%,80%,100%{transform:scale(0.7);opacity:0.5} 40%{transform:scale(1);opacity:1} }
+  @keyframes spin    { to { transform:rotate(360deg) } }
 </style>
 </head>
 <body>
-
 <div class="shell">
 
-  <!-- ── SIDEBAR ──────────────────────────────────────────────── -->
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-logo">
       <div class="logo-mark">
-        <div class="logo-icon">🎓</div>
-        <div>
-          <div>AcademiQ</div>
-          <div class="logo-sub">Context-Aware Academic Assistant</div>
-        </div>
+        <div class="logo-icon">&#127979;</div>
+        <div><div>AcademiQ</div><div class="logo-sub">Context-Aware Academic Assistant</div></div>
       </div>
     </div>
-
-    <div class="sidebar-section">
-
-      <!-- Setup card -->
+    <div class="sidebar-body">
       <div class="setup-card">
-        <div class="setup-label">🔑 API Key</div>
+        <div class="setup-label">&#128273; OpenAI API Key</div>
         <div class="input-wrap">
           <input type="password" id="apiKey" placeholder="sk-..." autocomplete="off"/>
-          <button class="eye-btn" onclick="toggleKey()" title="Show/hide">👁</button>
+          <button class="eye-btn" onclick="toggleKey()">&#128065;</button>
         </div>
-
-        <div class="setup-label" style="margin-top:4px">📄 Upload PDF</div>
+        <div class="setup-label">&#128196; Upload Document</div>
         <div class="upload-zone" id="uploadZone">
           <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" onchange="onFileChosen(event)"/>
-          <div class="upload-icon">📂</div>
-          <div class="upload-text"><strong>Click to browse</strong> or drag & drop</div>
+          <div class="upload-icon">&#128194;</div>
+          <div class="upload-text"><strong>Click to browse</strong> or drag &amp; drop</div>
+          <div class="upload-formats">PDF &middot; Word &middot; PowerPoint &middot; Excel</div>
           <div class="file-chosen" id="fileChosen" style="display:none"></div>
         </div>
-
-        <button class="btn btn-primary" id="processBtn" onclick="processDocument()" disabled>
-          ⚡ Process Document
-        </button>
-
+        <button class="btn btn-primary" id="processBtn" onclick="processDocument()" disabled>&#9889; Process Document</button>
         <div id="docStatus" style="display:none"></div>
       </div>
 
-      <hr class="divider" style="margin: 8px 0"/>
+      <!-- Memory status -->
+      <div class="memory-badge" id="memoryBadge">
+        <div class="memory-dot off" id="memoryDot"></div>
+        <span id="memoryText">Chat memory inactive</span>
+      </div>
 
-      <!-- Navigation -->
+      <hr class="divider"/>
       <div class="nav-label">Features</div>
-      <div class="nav-item active" id="nav-chat" onclick="switchPanel('chat')">
-        <span class="nav-icon">💬</span> Ask Questions
-      </div>
-      <div class="nav-item" id="nav-summary" onclick="switchPanel('summary')">
-        <span class="nav-icon">📝</span> Summarize
-      </div>
-      <div class="nav-item" id="nav-quiz" onclick="switchPanel('quiz')">
-        <span class="nav-icon">🧪</span> Generate Quiz
-      </div>
-
-      <hr class="divider" style="margin: 8px 0"/>
-      <div class="nav-item" onclick="resetSession()">
-        <span class="nav-icon">🔄</span> Reset Session
-      </div>
-
+      <div class="nav-item active" id="nav-chat" onclick="switchPanel('chat')"><span class="nav-icon">&#128172;</span> Ask Questions</div>
+      <div class="nav-item" id="nav-summary" onclick="switchPanel('summary')"><span class="nav-icon">&#128221;</span> Summarize</div>
+      <div class="nav-item" id="nav-quiz" onclick="switchPanel('quiz')"><span class="nav-icon">&#129514;</span> Generate Quiz</div>
+      <hr class="divider"/>
+      <div class="nav-item" onclick="resetSession()"><span class="nav-icon">&#128260;</span> Reset Session</div>
     </div>
   </aside>
 
-  <!-- ── MAIN ─────────────────────────────────────────────────── -->
+  <!-- MAIN -->
   <main class="main">
-
-    <!-- Top bar -->
     <div class="topbar">
-      <span class="topbar-title" id="topbarTitle">💬 Ask Questions</span>
-      <span class="topbar-badge" id="topbarBadge">No document loaded</span>
+      <div class="topbar-left">
+        <span class="topbar-title" id="topbarTitle">&#128172; Ask Questions</span>
+        <span class="topbar-badge" id="topbarBadge">No document loaded</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn danger" id="clearHistoryBtn" onclick="clearHistory()" style="display:none" title="Clear chat memory">
+          &#129504; Clear Memory
+        </button>
+      </div>
     </div>
 
-    <!-- ── CHAT PANEL ──────────────────────────────────────────── -->
+    <!-- CHAT PANEL -->
     <div class="panel active" id="panel-chat">
-
-      <!-- Welcome / messages -->
       <div class="chat-messages" id="chatMessages">
         <div class="welcome" id="welcomeScreen">
-          <div class="welcome-icon"></div>
+          <div class="welcome-icon">&#129302;</div>
           <h2>Ask anything about your document</h2>
-          <p>Upload a PDF and start a conversation. I'll answer questions based only on what's in your document — no hallucinations.</p>
-          <div class="welcome-chips">
+          <p>Powered by RAG with conversation memory and source citations.</p>
+          <div class="welcome-features">
+            <div class="feature-pill">&#129504; Remembers conversation</div>
+            <div class="feature-pill">&#128209; Cites page numbers</div>
+            <div class="feature-pill">&#128269; Smart context search</div>
+          </div>
+          <div class="welcome-chips" style="margin-top:12px">
             <div class="chip" onclick="useChip(this)">What are the main topics?</div>
-            <div class="chip" onclick="useChip(this)">Summarize the key points</div>
+            <div class="chip" onclick="useChip(this)">Explain the methodology</div>
             <div class="chip" onclick="useChip(this)">What does the introduction say?</div>
-            <div class="chip" onclick="useChip(this)">List the important definitions</div>
+            <div class="chip" onclick="useChip(this)">Summarize the key findings</div>
           </div>
         </div>
       </div>
-
-      <!-- Input -->
       <div class="chat-input-area">
         <div class="chat-form">
           <textarea class="chat-textarea" id="chatInput" rows="1"
-            placeholder="Ask a question about your document…"
+            placeholder="Ask anything — I remember our conversation..."
             onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-          <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled title="Send">➤</button>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled title="Send">&#10148;</button>
         </div>
-        <div class="chat-hint">Press Enter to send · Shift+Enter for new line</div>
+        <div class="chat-hint">Enter to send &middot; Shift+Enter for new line</div>
       </div>
     </div>
 
-    <!-- ── SUMMARY PANEL ───────────────────────────────────────── -->
+    <!-- SUMMARY PANEL -->
     <div class="panel" id="panel-summary">
       <div class="tool-panel">
         <div class="tool-header">
-          <h2>📝 Document Summarization</h2>
-          <p>Generate a structured summary of your uploaded document at any level of detail.</p>
+          <h2>&#128221; Document Summarization</h2>
+          <p>Generate a structured summary of your uploaded document.</p>
         </div>
-
         <div>
-          <div class="setup-label" style="margin-bottom:8px">Detail Level</div>
+          <div class="setup-label" style="margin-bottom:7px">Detail Level</div>
           <div class="option-row" id="detailOptions">
-            <div class="option-btn selected" onclick="selectOption('detailOptions', this)" data-val="Short (3–4 sentences)">Short</div>
-            <div class="option-btn" onclick="selectOption('detailOptions', this)" data-val="Medium (1–2 paragraphs)">Medium</div>
-            <div class="option-btn" onclick="selectOption('detailOptions', this)" data-val="Detailed (full breakdown)">Detailed</div>
+            <div class="option-btn selected" onclick="selectOption('detailOptions',this)" data-val="Short (3-4 sentences)">Short</div>
+            <div class="option-btn" onclick="selectOption('detailOptions',this)" data-val="Medium (1-2 paragraphs)">Medium</div>
+            <div class="option-btn" onclick="selectOption('detailOptions',this)" data-val="Detailed (full breakdown)">Detailed</div>
           </div>
         </div>
-
-        <button class="btn btn-primary" style="width:fit-content" id="summarizeBtn" onclick="doSummarize()" disabled>
-          📝 Generate Summary
-        </button>
-
+        <div><button class="action-btn" id="summarizeBtn" onclick="doSummarize()" disabled>&#128221; Generate Summary</button></div>
         <div id="summaryResult" style="display:none">
           <div class="result-box" id="summaryText"></div>
-          <div class="action-row" style="margin-top:10px">
-            <button class="download-btn" onclick="downloadText(summaryText.innerText, 'summary.txt')">⬇️ Download .txt</button>
+          <div class="action-row" style="margin-top:9px">
+            <button class="download-btn" onclick="downloadText('summaryText','summary.txt')">&#8681; Download .txt</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ── QUIZ PANEL ──────────────────────────────────────────── -->
+    <!-- QUIZ PANEL -->
     <div class="panel" id="panel-quiz">
       <div class="tool-panel">
         <div class="tool-header">
-          <h2>🧪 Quiz Generator</h2>
-          <p>Auto-generate quiz questions directly from your document content to test understanding.</p>
+          <h2>&#129514; Quiz Generator</h2>
+          <p>Auto-generate quiz questions from your document content.</p>
         </div>
-
         <div>
-          <div class="setup-label" style="margin-bottom:8px">Question Type</div>
+          <div class="setup-label" style="margin-bottom:7px">Question Type</div>
           <div class="option-row" id="quizTypeOptions">
-            <div class="option-btn selected" onclick="selectOption('quizTypeOptions', this)" data-val="Multiple Choice (MCQ)">Multiple Choice</div>
-            <div class="option-btn" onclick="selectOption('quizTypeOptions', this)" data-val="True / False">True / False</div>
-            <div class="option-btn" onclick="selectOption('quizTypeOptions', this)" data-val="Mixed">Mixed</div>
+            <div class="option-btn selected" onclick="selectOption('quizTypeOptions',this)" data-val="Multiple Choice (MCQ)">Multiple Choice</div>
+            <div class="option-btn" onclick="selectOption('quizTypeOptions',this)" data-val="True / False">True / False</div>
+            <div class="option-btn" onclick="selectOption('quizTypeOptions',this)" data-val="Mixed">Mixed</div>
           </div>
         </div>
-
         <div>
-          <div class="setup-label" style="margin-bottom:8px">Number of Questions</div>
+          <div class="setup-label" style="margin-bottom:7px">Number of Questions</div>
           <div class="slider-wrap">
-            <input type="range" id="numQuestions" min="3" max="10" value="5" oninput="document.getElementById('numVal').innerText=this.value"/>
+            <input type="range" id="numQuestions" min="3" max="10" value="5" oninput="document.getElementById('numVal').textContent=this.value"/>
             <span class="slider-val" id="numVal">5</span>
           </div>
         </div>
-
-        <button class="btn btn-primary" style="width:fit-content" id="quizBtn" onclick="doQuiz()" disabled>
-          🧪 Generate Quiz
-        </button>
-
+        <div><button class="action-btn" id="quizBtn" onclick="doQuiz()" disabled>&#129514; Generate Quiz</button></div>
         <div id="quizResult" style="display:none">
           <div class="result-box" id="quizText"></div>
-          <div class="action-row" style="margin-top:10px">
-            <button class="download-btn" onclick="downloadText(quizText.innerText, 'quiz.txt')">⬇️ Download .txt</button>
+          <div class="action-row" style="margin-top:9px">
+            <button class="download-btn" onclick="downloadText('quizText','quiz.txt')">&#8681; Download .txt</button>
           </div>
         </div>
       </div>
     </div>
-
   </main>
 </div>
 
-<!-- ── SCRIPTS ─────────────────────────────────────────────────── -->
 <script>
   let docLoaded = false;
+  let msgCount = 0;
 
-  // ── File / Upload ──────────────────────────────────────────────
+  // ── File ──────────────────────────────────────────────────────
   function onFileChosen(e) {
-    const f = e.target.files[0];
-    if (!f) return;
-    document.getElementById('fileChosen').style.display = 'block';
-    document.getElementById('fileChosen').textContent = '📄 ' + f.name;
+    const f = e.target.files[0]; if (!f) return;
+    const el = document.getElementById('fileChosen');
+    el.style.display = 'block'; el.textContent = f.name;
     updateProcessBtn();
   }
-
   function updateProcessBtn() {
-    const key  = document.getElementById('apiKey').value.trim();
+    const key = document.getElementById('apiKey').value.trim();
     const file = document.getElementById('fileInput').files[0];
     document.getElementById('processBtn').disabled = !(key && file);
   }
   document.getElementById('apiKey').addEventListener('input', updateProcessBtn);
-
-  // drag & drop highlight
   const zone = document.getElementById('uploadZone');
   zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
   zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
   zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag'); });
-
-  function toggleKey() {
-    const inp = document.getElementById('apiKey');
-    inp.type = inp.type === 'password' ? 'text' : 'password';
-  }
+  function toggleKey() { const i = document.getElementById('apiKey'); i.type = i.type==='password'?'text':'password'; }
 
   async function processDocument() {
     const key  = document.getElementById('apiKey').value.trim();
     const file = document.getElementById('fileInput').files[0];
     if (!key || !file) return;
-
     const btn = document.getElementById('processBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span> Processing…';
-
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Processing...';
+    document.getElementById('docStatus').style.display = 'none';
     const formData = new FormData();
     formData.append('api_key', key);
     formData.append('pdf', file);
-
     try {
-      const res  = await fetch('/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-
+      const res = await fetch('/upload', { method:'POST', body:formData });
+      let data; try { data = await res.json(); } catch { showStatus('error','Unexpected server response.'); btn.disabled=false; btn.innerHTML='Process Document'; updateProcessBtn(); return; }
       if (data.success) {
-        docLoaded = true;
-        showStatus('ready', '✅ ' + data.filename + ' ready!');
-        document.getElementById('topbarBadge').textContent = '📄 ' + data.filename;
+        docLoaded = true; msgCount = 0;
+        showStatus('ready', 'Ready: ' + data.filename);
+        document.getElementById('topbarBadge').textContent = data.filename;
         document.getElementById('sendBtn').disabled = false;
         document.getElementById('summarizeBtn').disabled = false;
         document.getElementById('quizBtn').disabled = false;
-        showToast('Document indexed successfully!', 'success');
+        setMemoryActive(false);
+        showToast('Document indexed!', 'success');
       } else {
-        showStatus('error', '❌ ' + data.error);
-        showToast(data.error, 'error');
+        showStatus('error', data.error || 'Unknown error.');
+        showToast(data.error || 'Error', 'error');
       }
-    } catch (err) {
-      showStatus('error', '❌ Connection error. Is Flask running?');
-    }
-    btn.disabled = false;
-    btn.innerHTML = '⚡ Process Document';
-    updateProcessBtn();
+    } catch(err) { showStatus('error', 'Network error: '+err.message); showToast('Network error','error'); }
+    btn.disabled=false; btn.innerHTML='Process Document'; updateProcessBtn();
   }
 
   function showStatus(type, msg) {
     const el = document.getElementById('docStatus');
-    el.style.display = 'flex';
-    el.className = 'doc-status ' + type;
-    el.innerHTML = msg;
+    if (!msg) { el.style.display='none'; return; }
+    el.style.display='flex'; el.className='doc-status '+type; el.textContent=msg;
   }
 
-  // ── Navigation ─────────────────────────────────────────────────
-  const panelTitles = { chat: '💬 Ask Questions', summary: '📝 Summarize', quiz: '🧪 Generate Quiz' };
+  function setMemoryActive(active) {
+    const dot = document.getElementById('memoryDot');
+    const txt = document.getElementById('memoryText');
+    const clearBtn = document.getElementById('clearHistoryBtn');
+    if (active) {
+      dot.className = 'memory-dot';
+      txt.textContent = 'Memory active (' + msgCount + ' messages)';
+      clearBtn.style.display = 'flex';
+    } else {
+      dot.className = 'memory-dot off';
+      txt.textContent = 'Chat memory inactive';
+      clearBtn.style.display = 'none';
+    }
+  }
+
+  // ── Nav ───────────────────────────────────────────────────────
+  const panelTitles = { chat:'Ask Questions', summary:'Summarize', quiz:'Generate Quiz' };
   function switchPanel(name) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.getElementById('panel-' + name).classList.add('active');
-    document.getElementById('nav-' + name).classList.add('active');
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    document.getElementById('panel-'+name).classList.add('active');
+    document.getElementById('nav-'+name).classList.add('active');
     document.getElementById('topbarTitle').textContent = panelTitles[name];
   }
 
-  // ── Chat ───────────────────────────────────────────────────────
-  function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  }
-  function autoResize(el) {
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 140) + 'px';
-  }
+  // ── Chat ──────────────────────────────────────────────────────
+  function handleKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+  function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
   function useChip(chip) {
-    document.getElementById('chatInput').value = chip.textContent;
-    if (docLoaded) sendMessage();
+    const input = document.getElementById('chatInput');
+    input.value = chip.textContent; autoResize(input);
+    if (docLoaded) sendMessage(); else showToast('Upload a document first!','error');
   }
 
   async function sendMessage() {
     const input = document.getElementById('chatInput');
-    const q = input.value.trim();
-    if (!q || !docLoaded) { if (!docLoaded) showToast('Please upload and process a PDF first.', 'error'); return; }
-
-    addMessage('user', q);
-    input.value = ''; input.style.height = 'auto';
-
+    const q = input.value.trim(); if (!q) return;
+    if (!docLoaded) { showToast('Upload a document first!','error'); return; }
     const welcome = document.getElementById('welcomeScreen');
     if (welcome) welcome.remove();
-
+    addMessage('user', q, []);
+    input.value=''; input.style.height='auto';
     const typingId = addTyping();
     document.getElementById('sendBtn').disabled = true;
-
     try {
-      const res  = await fetch('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q }) });
-      const data = await res.json();
+      const res = await fetch('/ask', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({question:q}) });
+      let data; try { data=await res.json(); } catch { data={answer:'Server error — could not parse response.', sources:[]}; }
       removeTyping(typingId);
-      addMessage('bot', data.answer || data.error || 'Something went wrong.');
-    } catch {
+      addMessage('bot', data.answer||data.error||'No response.', data.sources||[]);
+      msgCount++;
+      setMemoryActive(msgCount > 0);
+    } catch(err) {
       removeTyping(typingId);
-      addMessage('bot', 'Connection error. Is Flask running?');
+      addMessage('bot', 'Network error: '+err.message, []);
     }
     document.getElementById('sendBtn').disabled = false;
   }
 
-  function addMessage(role, text) {
+  function addMessage(role, text, sources) {
     const container = document.getElementById('chatMessages');
-    const div = document.createElement('div');
-    div.className = 'msg ' + role;
+    const div = document.createElement('div'); div.className = 'msg '+role;
+    const avatar = document.createElement('div'); avatar.className='msg-avatar';
+    avatar.textContent = role==='bot' ? '\uD83C\uDF93' : '\uD83E\uDDD1';
 
-    const avatar = document.createElement('div');
-    avatar.className = 'msg-avatar';
-    avatar.textContent = role === 'bot' ? '🎓' : '🧑';
+    if (role === 'bot') {
+      const wrap = document.createElement('div'); wrap.className='bubble-wrap';
+      const bubble = document.createElement('div'); bubble.className='bubble';
+      bubble.innerHTML = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      wrap.appendChild(bubble);
 
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    bubble.innerHTML = text.replace(/\n/g, '<br>');
+      // Citations
+      if (sources && sources.length > 0) {
+        const cites = document.createElement('div'); cites.className='citations';
+        sources.forEach(s => {
+          const chip = document.createElement('div'); chip.className='citation-chip';
+          chip.innerHTML = `<span class="page-icon">&#128209;</span> Page ${s.page}<div class="tooltip">${s.snippet ? escapeHtml(s.snippet) : 'Page '+s.page}</div>`;
+          cites.appendChild(chip);
+        });
+        wrap.appendChild(cites);
+      }
+      div.appendChild(avatar); div.appendChild(wrap);
+    } else {
+      const bubble = document.createElement('div'); bubble.className='bubble';
+      bubble.innerHTML = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+      div.appendChild(avatar); div.appendChild(bubble);
+    }
 
-    div.appendChild(avatar);
-    div.appendChild(bubble);
-    container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
-    return div;
+    container.appendChild(div); container.scrollTop=container.scrollHeight;
   }
+
+  function escapeHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   let typingCount = 0;
   function addTyping() {
-    const id = 'typing-' + (++typingCount);
-    const container = document.getElementById('chatMessages');
-    const div = document.createElement('div');
-    div.className = 'msg bot'; div.id = id;
-    div.innerHTML = `<div class="msg-avatar">🎓</div><div class="bubble"><div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
-    container.appendChild(div);
-    container.scrollTop = container.scrollHeight;
-    return id;
+    const id='typing-'+(++typingCount);
+    const container=document.getElementById('chatMessages');
+    const div=document.createElement('div'); div.className='msg bot'; div.id=id;
+    div.innerHTML='<div class="msg-avatar">\uD83C\uDF93</div><div class="bubble-wrap"><div class="bubble"><div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div></div>';
+    container.appendChild(div); container.scrollTop=container.scrollHeight; return id;
   }
-  function removeTyping(id) {
-    const el = document.getElementById(id);
-    if (el) el.remove();
+  function removeTyping(id) { const el=document.getElementById(id); if(el) el.remove(); }
+
+  async function clearHistory() {
+    try { await fetch('/clear_history', {method:'POST'}); } catch {}
+    msgCount = 0; setMemoryActive(false);
+    showToast('Conversation memory cleared.', 'success');
   }
 
-  // ── Summary ────────────────────────────────────────────────────
+  // ── Summary ───────────────────────────────────────────────────
   function selectOption(groupId, el) {
-    document.querySelectorAll('#' + groupId + ' .option-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('#'+groupId+' .option-btn').forEach(b=>b.classList.remove('selected'));
     el.classList.add('selected');
   }
-
   async function doSummarize() {
-    if (!docLoaded) { showToast('Please upload and process a PDF first.', 'error'); return; }
+    if (!docLoaded) { showToast('Upload a document first!','error'); return; }
     const detail = document.querySelector('#detailOptions .selected').dataset.val;
     const btn = document.getElementById('summarizeBtn');
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Summarizing…';
-
+    btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Summarizing...';
     try {
-      const res  = await fetch('/summarize', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ detail }) });
-      const data = await res.json();
-      const box  = document.getElementById('summaryResult');
-      const txt  = document.getElementById('summaryText');
-      txt.textContent = data.summary || data.error;
-      box.style.display = 'block';
-    } catch { showToast('Error generating summary.', 'error'); }
-
-    btn.disabled = false; btn.innerHTML = '📝 Generate Summary';
+      const res=await fetch('/summarize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({detail})});
+      let data; try{data=await res.json();}catch{data={error:'Could not parse response.'};}
+      document.getElementById('summaryText').textContent=data.summary||data.error||'No summary returned.';
+      document.getElementById('summaryResult').style.display='block';
+    } catch(err) { showToast('Error: '+err.message,'error'); }
+    btn.disabled=false; btn.innerHTML='Generate Summary';
   }
 
-  // ── Quiz ───────────────────────────────────────────────────────
+  // ── Quiz ──────────────────────────────────────────────────────
   async function doQuiz() {
-    if (!docLoaded) { showToast('Please upload and process a PDF first.', 'error'); return; }
-    const quiz_type   = document.querySelector('#quizTypeOptions .selected').dataset.val;
-    const num_questions = document.getElementById('numQuestions').value;
-    const btn = document.getElementById('quizBtn');
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Generating…';
-
+    if (!docLoaded) { showToast('Upload a document first!','error'); return; }
+    const quiz_type=document.querySelector('#quizTypeOptions .selected').dataset.val;
+    const num_questions=document.getElementById('numQuestions').value;
+    const btn=document.getElementById('quizBtn');
+    btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Generating...';
     try {
-      const res  = await fetch('/quiz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quiz_type, num_questions }) });
-      const data = await res.json();
-      const box  = document.getElementById('quizResult');
-      const txt  = document.getElementById('quizText');
-      txt.textContent = data.quiz || data.error;
-      box.style.display = 'block';
-    } catch { showToast('Error generating quiz.', 'error'); }
-
-    btn.disabled = false; btn.innerHTML = '🧪 Generate Quiz';
+      const res=await fetch('/quiz',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({quiz_type,num_questions})});
+      let data; try{data=await res.json();}catch{data={error:'Could not parse response.'};}
+      document.getElementById('quizText').textContent=data.quiz||data.error||'No quiz returned.';
+      document.getElementById('quizResult').style.display='block';
+    } catch(err) { showToast('Error: '+err.message,'error'); }
+    btn.disabled=false; btn.innerHTML='Generate Quiz';
   }
 
-  // ── Helpers ────────────────────────────────────────────────────
-  function downloadText(text, filename) {
-    const a = document.createElement('a');
-    a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
-    a.download = filename; a.click();
+  // ── Helpers ───────────────────────────────────────────────────
+  function downloadText(elId, filename) {
+    const text=document.getElementById(elId).textContent;
+    const a=document.createElement('a'); a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(text); a.download=filename; a.click();
   }
-
   async function resetSession() {
-    await fetch('/reset', { method: 'POST' });
-    docLoaded = false;
-    document.getElementById('docStatus').style.display = 'none';
-    document.getElementById('fileChosen').style.display = 'none';
-    document.getElementById('fileInput').value = '';
-    document.getElementById('topbarBadge').textContent = 'No document loaded';
-    document.getElementById('sendBtn').disabled = true;
-    document.getElementById('summarizeBtn').disabled = true;
-    document.getElementById('quizBtn').disabled = true;
-    document.getElementById('chatMessages').innerHTML = `<div class="welcome" id="welcomeScreen">
-      <div class="welcome-icon"></div>
-      <h2>Ask anything about your document</h2>
-      <p>Upload a PDF and start a conversation. I'll answer questions based only on what's in your document — no hallucinations.</p>
-      <div class="welcome-chips">
-        <div class="chip" onclick="useChip(this)">What are the main topics?</div>
-        <div class="chip" onclick="useChip(this)">Summarize the key points</div>
-        <div class="chip" onclick="useChip(this)">What does the introduction say?</div>
-        <div class="chip" onclick="useChip(this)">List the important definitions</div>
-      </div>
-    </div>`;
-    document.getElementById('summaryResult').style.display = 'none';
-    document.getElementById('quizResult').style.display = 'none';
+    try{await fetch('/reset',{method:'POST'});}catch{}
+    docLoaded=false; msgCount=0;
+    document.getElementById('docStatus').style.display='none';
+    document.getElementById('fileChosen').style.display='none';
+    document.getElementById('fileInput').value='';
+    document.getElementById('topbarBadge').textContent='No document loaded';
+    document.getElementById('sendBtn').disabled=true;
+    document.getElementById('summarizeBtn').disabled=true;
+    document.getElementById('quizBtn').disabled=true;
+    document.getElementById('summaryResult').style.display='none';
+    document.getElementById('quizResult').style.display='none';
+    setMemoryActive(false);
+    document.getElementById('chatMessages').innerHTML=`<div class="welcome" id="welcomeScreen"><div class="welcome-icon">&#129302;</div><h2>Ask anything about your document</h2><p>Powered by RAG with conversation memory and source citations.</p><div class="welcome-features"><div class="feature-pill">&#129504; Remembers conversation</div><div class="feature-pill">&#128209; Cites page numbers</div><div class="feature-pill">&#128269; Smart context search</div></div><div class="welcome-chips" style="margin-top:12px"><div class="chip" onclick="useChip(this)">What are the main topics?</div><div class="chip" onclick="useChip(this)">Explain the methodology</div><div class="chip" onclick="useChip(this)">What does the introduction say?</div><div class="chip" onclick="useChip(this)">Summarize the key findings</div></div></div>`;
     updateProcessBtn();
-    showToast('Session reset.', 'success');
+    showToast('Session reset.','success');
   }
-
-  function showToast(msg, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = 'toast ' + type;
-    toast.innerHTML = (type === 'success' ? '✅ ' : '❌ ') + msg;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
+  function showToast(msg,type='success') {
+    const t=document.createElement('div'); t.className='toast '+type;
+    t.textContent=(type==='success'?'OK: ':'Error: ')+msg;
+    document.body.appendChild(t); setTimeout(()=>t.remove(),3200);
   }
 </script>
 </body>
